@@ -2,6 +2,7 @@ module Main where
 
 import Graphics.Image as I
 import Prelude as P
+import GHC.Float
 
 type Vector3 = (Float, Float, Float)
 
@@ -36,14 +37,6 @@ dot a b =
   let (a1, a2, a3) = a
       (b1, b2, b3) = b in
   a1 * b1 + a2 * b2 + a3 * b3
-  
-cross :: Vector3 -> Vector3 -> Vector3
-cross a b =
-  let (a1, a2, a3) = a
-      (b1, b2, b3) = b in
-  ((a2 * b3) - (a3 * b2),
-   (a3 * b1) - (a1 * b3),
-   (a1 * b2) - (a2 * b1))
 
 type Line = Vector3
 type Sphere = (Vector3, Float)
@@ -80,7 +73,20 @@ traceLineThroughSphere :: Line -> Sphere -> Double
 traceLineThroughSphere line sphere =
   case lineIntersectSphere line sphere of
   Nothing -> 1
-  Just (t1, t2) -> 0
+  Just (t1, t2) ->
+    let t = tValue t1 t2
+        light = (50, 250, -100)
+        lightray = sub light (mult line t)
+        (sphereCenter, _) = sphere
+        normal = sub line sphereCenter
+        dotprod = dot (unit lightray) (unit normal) in
+        float2Double dotprod
+
+tValue :: Float -> Float -> Float
+tValue t1 t2
+  | t1 > 0 && t2 > 0 = min t1 t2
+  | t1 > 0 = t1
+  | otherwise = t2
 
 tracePointThroughSphere :: Sphere -> (Int, Int) -> Pixel Y Double
 tracePointThroughSphere sphere (i, j) =
@@ -90,6 +96,5 @@ main :: IO ()
 main = do
   let size = 800
       sphere = ((0, 10, 0), 9)
-      grad_gray = (makeImageR RPU (size, size) (tracePointThroughSphere sphere))
-  writeImage "sphere.png" grad_gray
-
+      sphere_image = (makeImageR RPU (size, size) (tracePointThroughSphere sphere))
+  writeImage "sphere.png" sphere_image

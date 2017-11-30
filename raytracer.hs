@@ -1,4 +1,7 @@
-module Raytracer where
+module Main where
+
+import Graphics.Image as I
+import Prelude as P
 
 type Vector3 = (Float, Float, Float)
 
@@ -42,20 +45,20 @@ cross a b =
    (a3 * b1) - (a1 * b3),
    (a1 * b2) - (a2 * b1))
 
-type Line = (Vector3, Vector3)
+type Line = Vector3
 type Sphere = (Vector3, Float)
 type SphereIntersection = (Float, Float)
 
 descriminant :: Float -> Float -> Float -> Float
 descriminant a b c =
-  b ^ 2 - 4 * a * c
+  b ^ 2 - (4 * a * c)
 
 lineIntersectSphere :: Line -> Sphere -> Maybe SphereIntersection
 lineIntersectSphere line sphere =
-  let ((p1, p2, p3), (d1, d2, d3)) = line
+  let (r1, r2, r3) = line
       ((s1, s2, s3), r) = sphere
-      a = d1 ^ 2 + d2 ^ 2 + d3 ^ 2
-      b = 2 * (d1 * (s1 + p1) + d2 * (s2 + p2) + d3 * (s3 + p3))
+      a = r1 ^ 2 + r2 ^ 2 + r3 ^ 2
+      b = 2 * (r1 * s1 + r2 * s2 + r3 * s3)
       c = s1 ^ 2 + s2 ^ 2 + s3 ^ 2 - r ^ 2
       d = descriminant a b c in
       if d > 0 then
@@ -64,3 +67,29 @@ lineIntersectSphere line sphere =
         Just (t1, t2)
       else
         Nothing
+
+pointToLine :: Int -> Int -> Line
+pointToLine i j =
+  let r = (-i) + 400
+      c = j - 400
+      view = ((fromIntegral r), 0, (fromIntegral c))
+      cam = (0, -100, 0) in
+  sub view cam
+
+traceLineThroughSphere :: Line -> Sphere -> Double
+traceLineThroughSphere line sphere =
+  case lineIntersectSphere line sphere of
+  Nothing -> 1
+  Just (t1, t2) -> 0
+
+tracePointThroughSphere :: Sphere -> (Int, Int) -> Pixel Y Double
+tracePointThroughSphere sphere (i, j) =
+  PixelY (traceLineThroughSphere (pointToLine i j) sphere)
+
+main :: IO ()
+main = do
+  let size = 800
+      sphere = ((0, 10, 0), 9)
+      grad_gray = (makeImageR RPU (size, size) (tracePointThroughSphere sphere))
+  writeImage "sphere.png" grad_gray
+

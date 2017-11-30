@@ -8,3 +8,5 @@ I don't really know much about Haskell right now but... I did this to make this 
 cabal update && cabal install hip
 ./run
 ````
+
+![output](https://raw.githubusercontent.com/jpittis/old-raytracer-clone-hk/master/sphere.png)
